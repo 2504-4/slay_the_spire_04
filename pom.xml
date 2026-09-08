@@ -9,9 +9,9 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.release>26</maven.compiler.release>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <javafx.version>26.0.2</javafx.version>
+        <javafx.version>17.0.20</javafx.version>
     </properties>
 
     <dependencies>
@@ -30,9 +30,6 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>org.example.view.App</mainClass>
-                    <options>
-                        <option>--enable-native-access=javafx.graphics</option>
-                    </options>
                 </configuration>
             </plugin>
         </plugins>
