@@ -68,5 +68,5 @@ public final class DefaultBattleGame implements BattleGame {
     private String resolveMonsterAction() { return switch (monsterAction) { case ATTACK -> { player.takeDamage(monsterDamage); yield "Monster attacked for " + monsterDamage + "."; } case STRENGTHEN -> { monsterDamage += MONSTER_STRENGTH_AMOUNT; yield "Monster strengthened."; } case DEFEND -> { monster.gainBlock(MONSTER_BLOCK_AMOUNT); yield "Monster gained block."; } }; }
     private void chooseNextMonsterAction() { MonsterAction[] availableActions = MonsterAction.values(); monsterAction = availableActions[random.nextInt(availableActions.length)]; }
     private int intentDamage() { return monsterAction == MonsterAction.ATTACK ? monsterDamage : NO_INTENT_DAMAGE; }
-    private String intentDescription() { return switch (monsterAction) { case ATTACK -> monsterAction.displayName() + " " + monsterDamage; case STRENGTHEN -> monsterAction.displayName(); case DEFEND -> monsterAction.displayName() + " " + MONSTER_BLOCK_AMOUNT; }; }
+    private String intentDescription() { return switch (monsterAction) { case ATTACK -> monsterAction.displayName() + " " + monsterDamage; case STRENGTHEN -> monsterAction.displayName() + " +" + MONSTER_STRENGTH_AMOUNT + " (next attack " + (monsterDamage + MONSTER_STRENGTH_AMOUNT) + ")"; case DEFEND -> monsterAction.displayName() + " " + MONSTER_BLOCK_AMOUNT; }; }
 }

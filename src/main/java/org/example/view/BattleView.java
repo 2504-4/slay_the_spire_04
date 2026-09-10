@@ -33,6 +33,7 @@ public final class BattleView extends BorderPane implements BattleViewPort {
     private final Label energyLabel = new Label();
     private final Label playerLabel = new Label();
     private final Label monsterLabel = new Label();
+    private final Label monsterIntentLabel = new Label();
     private final ProgressBar playerBar = new ProgressBar();
     private final ProgressBar monsterBar = new ProgressBar();
     private final HBox handContainer = new HBox(VIEW_PADDING);
@@ -98,6 +99,7 @@ public final class BattleView extends BorderPane implements BattleViewPort {
         energyLabel.setTextFill(Color.GOLD);
         playerLabel.setTextFill(Color.LIGHTSKYBLUE);
         monsterLabel.setTextFill(Color.LIGHTPINK);
+        monsterIntentLabel.setTextFill(Color.GOLD);
     }
 
     private void bindHandlers() {
@@ -112,7 +114,7 @@ public final class BattleView extends BorderPane implements BattleViewPort {
         endTurnButton.setStyle(ACTION_BUTTON_STYLE);
         HBox actions = new HBox(VIEW_PADDING, startButton, endTurnButton, energyLabel, drawPileButton, discardPileButton);
         VBox playerPanel = new VBox(VIEW_PADDING, playerLabel, playerBar);
-        VBox monsterPanel = new VBox(VIEW_PADDING, monsterLabel, monsterBar);
+        VBox monsterPanel = new VBox(VIEW_PADDING, monsterLabel, monsterBar, monsterIntentLabel);
         playerPanel.setStyle(FIGHTER_PANEL_STYLE);
         monsterPanel.setStyle(FIGHTER_PANEL_STYLE);
         HBox fighters = new HBox(VIEW_PADDING, playerPanel, monsterPanel);
@@ -128,6 +130,7 @@ public final class BattleView extends BorderPane implements BattleViewPort {
         energyLabel.setText("Energy: " + battleSnapshot.energy());
         playerLabel.setText(formatFighterStats("Player", battleSnapshot.playerHealth(), battleSnapshot.playerMaxHealth(), battleSnapshot.playerBlock()));
         monsterLabel.setText(formatFighterStats("Monster", battleSnapshot.monsterHealth(), battleSnapshot.monsterMaxHealth(), battleSnapshot.monsterBlock()));
+        monsterIntentLabel.setText("Turn " + battleSnapshot.turn() + " intent: " + battleSnapshot.monsterIntent());
         playerBar.setProgress(healthRatio(battleSnapshot.playerHealth(), battleSnapshot.playerMaxHealth()));
         monsterBar.setProgress(healthRatio(battleSnapshot.monsterHealth(), battleSnapshot.monsterMaxHealth()));
         drawPileButton.setText("Draw: " + battleSnapshot.drawPileSize());
