@@ -10,19 +10,25 @@ import org.example.view.BattleView;
 
 /** JavaFX application entry point. */
 public class Main extends Application {
+    private static final String WINDOW_TITLE = "单关卡牌战斗 Demo";
+    private static final double INITIAL_WINDOW_WIDTH = 960;
+    private static final double INITIAL_WINDOW_HEIGHT = 640;
+    private static final double MINIMUM_WINDOW_WIDTH = 780;
+    private static final double MINIMUM_WINDOW_HEIGHT = 540;
+
     @Override
     public void start(Stage stage) {
-        BattleView view = new BattleView();
-        BattleGame game = new DefaultBattleGame();
-        new GameController(game, view);
-        stage.setTitle("单关卡牌战斗 Demo");
-        stage.setScene(new Scene(view, 960, 640));
-        stage.setMinWidth(780);
-        stage.setMinHeight(540);
+        BattleView battleView = new BattleView();
+        BattleGame battleGame = new DefaultBattleGame();
+        new GameController(battleGame, battleView);
+        stage.setTitle(WINDOW_TITLE);
+        stage.setScene(new Scene(battleView, INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT));
+        stage.setMinWidth(MINIMUM_WINDOW_WIDTH);
+        stage.setMinHeight(MINIMUM_WINDOW_HEIGHT);
         stage.show();
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    public static void main(String[] arguments) {
+        launch(arguments);
     }
 }

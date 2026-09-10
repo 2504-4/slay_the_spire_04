@@ -5,28 +5,52 @@ import org.example.view.BattleViewPort;
 
 /** Coordinates UI actions and pure game rules. */
 public final class GameController {
-    private final BattleGame game;
-    private final BattleViewPort view;
+    private static final String DRAW_PILE_TITLE = "抽牌堆";
+    private static final String DISCARD_PILE_TITLE = "弃牌堆";
 
-    /**
-     * Wires a game-use-case port to a view port. Concrete implementations are
-     * selected by the composition root, not by this controller.
-     */
-    public GameController(BattleGame game, BattleViewPort view) {
-        this.game = game;
-        this.view = view;
-        view.setOnStart(this::startGame);
-        view.setOnEndTurn(this::endTurn);
-        view.setOnCardPlayed(this::playCard);
-        view.setOnDrawPileViewed(this::showDrawPile);
-        view.setOnDiscardPileViewed(this::showDiscardPile);
-        render();
+    private final BattleGame battleGame;
+    private final BattleViewPort battleView;
+
+    /** Wires a game-use-case port to a view port selected by the composition root. */
+    public GameController(BattleGame battleGame, BattleViewPort battleView) {
+        this.battleGame = battleGame;
+        this.battleView = battleView;
+        bindViewHandlers();
+        renderBattle();
     }
 
-    private void startGame() { game.start(); render(); }
-    private void playCard(int index) { game.playCard(index); render(); }
-    private void endTurn() { game.endTurn(); render(); }
-    private void showDrawPile() { view.showPile("抽牌堆", game.snapshot().drawPile()); }
-    private void showDiscardPile() { view.showPile("弃牌堆", game.snapshot().discardPile()); }
-    private void render() { view.render(game.snapshot()); }
+    private void bindViewHandlers() {
+        battleView.setOnStart(this::startGame);
+        battleView.setOnEndTurn(this::endTurn);
+        battleView.setOnCardPlayed(this::playCard);
+        battleView.setOnDrawPileViewed(this::showDrawPile);
+        battleView.setOnDiscardPileViewed(this::showDiscardPile);
+    }
+
+    private void startGame() {
+        battleGame.start();
+        renderBattle();
+    }
+
+    private void playCard(int handCardIndex) {
+        battleGame.playCard(handCardIndex);
+        renderBattle();
+    }
+
+    private void endTurn() {
+        battleGame.endTurn();
+        renderBattle();
+    }
+
+    private void showDrawPile() {
+        battleView.showPile(DRAW_PILE_TITLE, battleGame.snapshot().drawPile());
+    }
+
+    private void showDiscardPile() {
+        battleView.showPile(DISCARD_PILE_TITLE, battleGame.snapshot().discardPile());
+    }
+
+    private void renderBattle() {
+        battleView.render(battleGame.snapshot());
+    }
 }

@@ -20,7 +20,7 @@ public final class GameControllerSmokeTest {
         if (view.lastSnapshot.status() != GameStatus.READY) {
             throw new AssertionError("Controller did not render the initial state");
         }
-        view.start.run();
+        view.startHandler.run();
         if (view.lastSnapshot.status() != GameStatus.PLAYING || view.lastSnapshot.hand().size() != 5) {
             throw new AssertionError("Controller did not route the start action to the game");
         }
@@ -28,15 +28,15 @@ public final class GameControllerSmokeTest {
     }
 
     private static final class FakeView implements BattleViewPort {
-        private Runnable start = () -> { };
+        private Runnable startHandler = () -> { };
         private BattleSnapshot lastSnapshot;
 
-        @Override public void setOnStart(Runnable action) { start = action; }
-        @Override public void setOnEndTurn(Runnable action) { }
-        @Override public void setOnCardPlayed(Consumer<Integer> action) { }
-        @Override public void setOnDrawPileViewed(Runnable action) { }
-        @Override public void setOnDiscardPileViewed(Runnable action) { }
-        @Override public void render(BattleSnapshot state) { lastSnapshot = state; }
-        @Override public void showPile(String title, List<Card> cards) { }
+        @Override public void setOnStart(Runnable startHandler) { this.startHandler = startHandler; }
+        @Override public void setOnEndTurn(Runnable ignoredHandler) { }
+        @Override public void setOnCardPlayed(Consumer<Integer> cardPlayedHandler) { }
+        @Override public void setOnDrawPileViewed(Runnable ignoredHandler) { }
+        @Override public void setOnDiscardPileViewed(Runnable ignoredHandler) { }
+        @Override public void render(BattleSnapshot battleSnapshot) { lastSnapshot = battleSnapshot; }
+        @Override public void showPile(String pileTitle, List<Card> pileCards) { }
     }
 }

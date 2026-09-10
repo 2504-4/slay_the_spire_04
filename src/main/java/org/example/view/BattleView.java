@@ -2,139 +2,174 @@ package org.example.view;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import org.example.model.BattleSnapshot;
 import org.example.model.Card;
 import org.example.model.CardType;
 import org.example.model.GameStatus;
 
-import java.util.function.Consumer;
 import java.util.List;
+import java.util.function.Consumer;
 
-/** JavaFX-only rendering and input widgets. Game rules live in model. */
+/** JavaFX-only rendering and input widgets. */
 public final class BattleView extends BorderPane implements BattleViewPort {
-    private final Label message = new Label();
-    private final Label energy = new Label();
-    private final Label playerHp = new Label();
-    private final Label monsterHp = new Label();
-    private final Label playerBlock = new Label();
-    private final Label intent = new Label();
+    private static final double VIEW_PADDING = 20;
+    private static final double CARD_WIDTH = 140;
+    private static final double CARD_HEIGHT = 110;
+    private static final String BACKGROUND_STYLE = "-fx-background-color: linear-gradient(to bottom, #263b55, #101923);";
+    private static final String ACTION_BUTTON_STYLE = "-fx-background-color: #d5a94a; -fx-font-weight: bold;";
+    private static final String ATTACK_CARD_STYLE = "-fx-background-color: #b54c55; -fx-text-fill: white; -fx-font-weight: bold;";
+    private static final String DEFEND_CARD_STYLE = "-fx-background-color: #3d7fb2; -fx-text-fill: white; -fx-font-weight: bold;";
+    private static final String FIGHTER_PANEL_STYLE = "-fx-background-color: rgba(255,255,255,0.12); -fx-background-radius: 12; -fx-padding: 18;";
+
+    private final Label messageLabel = new Label();
+    private final Label energyLabel = new Label();
+    private final Label playerLabel = new Label();
+    private final Label monsterLabel = new Label();
     private final ProgressBar playerBar = new ProgressBar();
     private final ProgressBar monsterBar = new ProgressBar();
-    private final HBox handBox = new HBox(12);
-    private final Button startButton = new Button("开始战斗");
-    private final Button endTurnButton = new Button("结束回合");
+    private final HBox handContainer = new HBox(VIEW_PADDING);
+    private final Button startButton = new Button("Start");
+    private final Button endTurnButton = new Button("End turn");
     private final Button drawPileButton = new Button();
     private final Button discardPileButton = new Button();
-    private Runnable onStart = () -> {};
-    private Runnable onEndTurn = () -> {};
-    private Runnable onDrawPileViewed = () -> {};
-    private Runnable onDiscardPileViewed = () -> {};
-    private Consumer<Integer> onCardPlayed = ignored -> {};
+    private Runnable startHandler = () -> { };
+    private Runnable endTurnHandler = () -> { };
+    private Runnable drawPileHandler = () -> { };
+    private Runnable discardPileHandler = () -> { };
+    private Consumer<Integer> cardPlayedHandler = ignoredCardIndex -> { };
 
     public BattleView() {
-        setPadding(new Insets(22));
-        setStyle("-fx-background-color: linear-gradient(to bottom, #202a38, #111820);");
-        message.setFont(Font.font(18));
-        message.setTextFill(Color.WHITESMOKE);
-        energy.setTextFill(Color.web("#ffd866"));
-        energy.setFont(Font.font(20));
-        startButton.setOnAction(e -> onStart.run());
-        endTurnButton.setOnAction(e -> onEndTurn.run());
-        drawPileButton.setOnAction(e -> onDrawPileViewed.run());
-        discardPileButton.setOnAction(e -> onDiscardPileViewed.run());
-
-        HBox top = new HBox(18, startButton, endTurnButton, energy, drawPileButton, discardPileButton);
-        top.setAlignment(Pos.CENTER_LEFT);
-        VBox header = new VBox(9, top, message);
-        setTop(header);
-
-        VBox player = fighterBox("勇者", playerHp, playerBlock, playerBar, "#58c4ff");
-        VBox monster = fighterBox("史莱姆", monsterHp, intent, monsterBar, "#ff7272");
-        HBox arena = new HBox(100, player, monster);
-        arena.setAlignment(Pos.CENTER);
-        setCenter(arena);
-
-        handBox.setAlignment(Pos.CENTER);
-        handBox.setPadding(new Insets(18, 0, 0, 0));
-        setBottom(handBox);
+        setPadding(new Insets(VIEW_PADDING));
+        setStyle(BACKGROUND_STYLE);
+        configureLabels();
+        bindHandlers();
+        buildLayout();
     }
 
-    public void setOnStart(Runnable action) { onStart = action; }
-    public void setOnEndTurn(Runnable action) { onEndTurn = action; }
-    public void setOnCardPlayed(Consumer<Integer> action) { onCardPlayed = action; }
-    public void setOnDrawPileViewed(Runnable action) { onDrawPileViewed = action; }
-    public void setOnDiscardPileViewed(Runnable action) { onDiscardPileViewed = action; }
-
-    public void render(BattleSnapshot state) {
-        message.setText(state.message());
-        energy.setText("能量：" + state.energy() + " / 3");
-        drawPileButton.setText("抽牌堆（" + state.drawPileSize() + "）");
-        discardPileButton.setText("弃牌堆（" + state.discardPileSize() + "）");
-        playerHp.setText("生命 " + state.playerHealth() + " / " + state.playerMaxHealth());
-        playerBlock.setText("格挡：" + state.playerBlock());
-        monsterHp.setText("生命 " + state.monsterHealth() + " / " + state.monsterMaxHealth());
-        intent.setText("格挡：" + state.monsterBlock() + "\n意图：" + state.monsterIntent());
-        playerBar.setProgress((double) state.playerHealth() / state.playerMaxHealth());
-        monsterBar.setProgress((double) state.monsterHealth() / state.monsterMaxHealth());
-        startButton.setText(state.status() == GameStatus.READY ? "开始战斗" : "重新开始");
-        boolean playing = state.status() == GameStatus.PLAYING;
-        endTurnButton.setDisable(!playing);
-        handBox.getChildren().clear();
-        for (int i = 0; i < state.hand().size(); i++) {
-            int index = i;
-            Card card = state.hand().get(i);
-            Button cardButton = new Button(card.name() + "\n" + card.description() + "\n消耗 " + card.cost());
-            cardButton.setWrapText(true);
-            cardButton.setPrefSize(142, 116);
-            cardButton.setDisable(!playing || state.energy() < card.cost());
-            String color = card.type() == CardType.ATTACK ? "#b94c52" : "#377db3";
-            cardButton.setStyle("-fx-background-color: " + color + "; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
-            cardButton.setOnAction(e -> onCardPlayed.accept(index));
-            handBox.getChildren().add(cardButton);
-        }
+    @Override
+    public void setOnStart(Runnable startHandler) {
+        this.startHandler = startHandler;
     }
 
-    /** Displays card data supplied by the controller; this method changes no game state. */
-    public void showPile(String title, List<Card> cards) {
+    @Override
+    public void setOnEndTurn(Runnable endTurnHandler) {
+        this.endTurnHandler = endTurnHandler;
+    }
+
+    @Override
+    public void setOnCardPlayed(Consumer<Integer> cardPlayedHandler) {
+        this.cardPlayedHandler = cardPlayedHandler;
+    }
+
+    @Override
+    public void setOnDrawPileViewed(Runnable drawPileViewedHandler) {
+        drawPileHandler = drawPileViewedHandler;
+    }
+
+    @Override
+    public void setOnDiscardPileViewed(Runnable discardPileViewedHandler) {
+        discardPileHandler = discardPileViewedHandler;
+    }
+
+    @Override
+    public void render(BattleSnapshot battleSnapshot) {
+        updateLabels(battleSnapshot);
+        renderHand(battleSnapshot);
+    }
+
+    @Override
+    public void showPile(String pileTitle, List<Card> pileCards) {
         Alert dialog = new Alert(Alert.AlertType.INFORMATION);
-        dialog.setTitle(title);
-        dialog.setHeaderText(title + "：" + cards.size() + " 张");
-        if (cards.isEmpty()) {
-            dialog.setContentText("当前没有卡牌");
-        } else {
-            StringBuilder content = new StringBuilder();
-            for (int i = 0; i < cards.size(); i++) {
-                Card card = cards.get(i);
-                content.append(i + 1).append(". ").append(card.name())
-                        .append(" - ").append(card.description()).append('\n');
-            }
-            dialog.setContentText(content.toString());
-        }
+        dialog.setTitle(pileTitle);
+        dialog.setContentText(formatPile(pileCards));
         dialog.showAndWait();
     }
 
-    private VBox fighterBox(String title, Label hp, Label detail, ProgressBar bar, String accent) {
-        Label name = new Label(title);
-        name.setTextFill(Color.WHITE);
-        name.setFont(Font.font(24));
-        hp.setTextFill(Color.WHITE);
-        detail.setTextFill(Color.LIGHTGRAY);
-        bar.setPrefWidth(240);
-        bar.setStyle("-fx-accent: " + accent + ";");
-        VBox box = new VBox(9, name, hp, bar, detail);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(28));
-        box.setMinWidth(300);
-        box.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-background-radius: 14;");
-        return box;
+    private void configureLabels() {
+        messageLabel.setTextFill(Color.WHITESMOKE);
+        energyLabel.setTextFill(Color.GOLD);
+        playerLabel.setTextFill(Color.LIGHTSKYBLUE);
+        monsterLabel.setTextFill(Color.LIGHTPINK);
+    }
+
+    private void bindHandlers() {
+        startButton.setOnAction(ignoredEvent -> startHandler.run());
+        endTurnButton.setOnAction(ignoredEvent -> endTurnHandler.run());
+        drawPileButton.setOnAction(ignoredEvent -> drawPileHandler.run());
+        discardPileButton.setOnAction(ignoredEvent -> discardPileHandler.run());
+    }
+
+    private void buildLayout() {
+        startButton.setStyle(ACTION_BUTTON_STYLE);
+        endTurnButton.setStyle(ACTION_BUTTON_STYLE);
+        HBox actions = new HBox(VIEW_PADDING, startButton, endTurnButton, energyLabel, drawPileButton, discardPileButton);
+        VBox playerPanel = new VBox(VIEW_PADDING, playerLabel, playerBar);
+        VBox monsterPanel = new VBox(VIEW_PADDING, monsterLabel, monsterBar);
+        playerPanel.setStyle(FIGHTER_PANEL_STYLE);
+        monsterPanel.setStyle(FIGHTER_PANEL_STYLE);
+        HBox fighters = new HBox(VIEW_PADDING, playerPanel, monsterPanel);
+        fighters.setAlignment(Pos.CENTER);
+        handContainer.setAlignment(Pos.CENTER);
+        setTop(new VBox(VIEW_PADDING, actions, messageLabel));
+        setCenter(fighters);
+        setBottom(handContainer);
+    }
+
+    private void updateLabels(BattleSnapshot battleSnapshot) {
+        messageLabel.setText(battleSnapshot.message());
+        energyLabel.setText("Energy: " + battleSnapshot.energy());
+        playerLabel.setText(formatFighterStats("Player", battleSnapshot.playerHealth(), battleSnapshot.playerMaxHealth(), battleSnapshot.playerBlock()));
+        monsterLabel.setText(formatFighterStats("Monster", battleSnapshot.monsterHealth(), battleSnapshot.monsterMaxHealth(), battleSnapshot.monsterBlock()));
+        playerBar.setProgress(healthRatio(battleSnapshot.playerHealth(), battleSnapshot.playerMaxHealth()));
+        monsterBar.setProgress(healthRatio(battleSnapshot.monsterHealth(), battleSnapshot.monsterMaxHealth()));
+        drawPileButton.setText("Draw: " + battleSnapshot.drawPileSize());
+        discardPileButton.setText("Discard: " + battleSnapshot.discardPileSize());
+        startButton.setText(battleSnapshot.status() == GameStatus.READY ? "Start" : "Restart");
+        endTurnButton.setDisable(battleSnapshot.status() != GameStatus.PLAYING);
+    }
+
+    private void renderHand(BattleSnapshot battleSnapshot) {
+        handContainer.getChildren().clear();
+        for (int cardIndex = 0; cardIndex < battleSnapshot.hand().size(); cardIndex++) {
+            handContainer.getChildren().add(createCardButton(battleSnapshot, cardIndex));
+        }
+    }
+
+    private Button createCardButton(BattleSnapshot battleSnapshot, int cardIndex) {
+        Card handCard = battleSnapshot.hand().get(cardIndex);
+        Button cardButton = new Button(handCard.name() + "\n" + handCard.description());
+        cardButton.setPrefSize(CARD_WIDTH, CARD_HEIGHT);
+        cardButton.setStyle(cardStyle(handCard.type()));
+        cardButton.setDisable(battleSnapshot.status() != GameStatus.PLAYING || battleSnapshot.energy() < handCard.cost());
+        cardButton.setOnAction(ignoredEvent -> cardPlayedHandler.accept(cardIndex));
+        return cardButton;
+    }
+
+    private String formatFighterStats(String fighterName, int health, int maximumHealth, int block) {
+        return fighterName + " HP: " + health + "/" + maximumHealth + "\nDefense: " + block;
+    }
+
+    private double healthRatio(int health, int maximumHealth) {
+        return (double) health / maximumHealth;
+    }
+
+    private String cardStyle(CardType cardType) {
+        return cardType == CardType.ATTACK ? ATTACK_CARD_STYLE : DEFEND_CARD_STYLE;
+    }
+
+    private String formatPile(List<Card> pileCards) {
+        StringBuilder result = new StringBuilder();
+        for (Card pileCard : pileCards) {
+            result.append(pileCard.name()).append('\n');
+        }
+        return result.toString();
     }
 }

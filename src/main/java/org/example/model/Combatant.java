@@ -2,25 +2,49 @@ package org.example.model;
 
 /** Mutable combat unit, owned only by BattleGame. */
 final class Combatant {
+    private static final int MINIMUM_VALUE = 0;
+
     private final int maxHealth;
     private int health;
     private int block;
 
-    Combatant(int maxHealth) {
-        this.maxHealth = maxHealth;
-        this.health = maxHealth;
+    Combatant(int maximumHealth) {
+        this.maxHealth = maximumHealth;
+        this.health = maximumHealth;
     }
 
-    void reset() { health = maxHealth; block = 0; }
-    void gainBlock(int amount) { block += amount; }
-    void clearBlock() { block = 0; }
-    void takeDamage(int amount) {
-        int remaining = Math.max(0, amount - block);
-        block = Math.max(0, block - amount);
-        health = Math.max(0, health - remaining);
+    void reset() {
+        health = maxHealth;
+        block = MINIMUM_VALUE;
     }
-    boolean isDead() { return health <= 0; }
-    int health() { return health; }
-    int maxHealth() { return maxHealth; }
-    int block() { return block; }
+
+    void gainBlock(int blockAmount) {
+        block += blockAmount;
+    }
+
+    void clearBlock() {
+        block = MINIMUM_VALUE;
+    }
+
+    void takeDamage(int damageAmount) {
+        int unblockedDamage = Math.max(MINIMUM_VALUE, damageAmount - block);
+        block = Math.max(MINIMUM_VALUE, block - damageAmount);
+        health = Math.max(MINIMUM_VALUE, health - unblockedDamage);
+    }
+
+    boolean isDead() {
+        return health <= MINIMUM_VALUE;
+    }
+
+    int health() {
+        return health;
+    }
+
+    int maxHealth() {
+        return maxHealth;
+    }
+
+    int block() {
+        return block;
+    }
 }
