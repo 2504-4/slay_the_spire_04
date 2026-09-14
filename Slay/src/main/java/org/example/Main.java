@@ -18,6 +18,12 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
 
+        // 全局异常兜底：任何未捕获异常都记录日志，不让 UI 崩死
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            System.err.println("[FATAL] 未捕获异常在线程 " + t.getName());
+            e.printStackTrace();
+        });
+
         // 首屏显示主菜单；点"开始游戏"通过回调切到战斗场景
         MenuView menuView = new MenuView(this::showGameScene);
         Scene menuScene = new Scene(menuView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);

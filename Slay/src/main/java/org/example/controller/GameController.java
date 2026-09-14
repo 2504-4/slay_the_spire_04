@@ -50,67 +50,78 @@ public class GameController {
      * @return true 表示成功打出。
      */
     public boolean playCard(int handIndex) {
-        if (!playerTurn || gameOver) return false;
-        if (handIndex < 0 || handIndex >= player.getHand().size()) return false;
+        try {
+            if (!playerTurn || gameOver) return false;
+            if (handIndex < 0 || handIndex >= player.getHand().size()) return false;
 
-        GameModel.Card card = player.getHand().get(handIndex);
+            GameModel.Card card = player.getHand().get(handIndex);
 
-        // 记录行动前状态，用于生成日志
-        int enemyHpBefore = enemy.getHp();
-        int enemyBlockBefore = enemy.getBlock();
-        int playerBlockBefore = player.getBlock();
+            // 记录行动前状态，用于生成日志
+            int enemyHpBefore = enemy.getHp();
+            int enemyBlockBefore = enemy.getBlock();
+            int playerBlockBefore = player.getBlock();
 
-        boolean played = player.playCard(card, enemy);
-        if (!played) {
-            log("✖ 无法使用【" + card.getName() + "】");
+            boolean played = player.playCard(card, enemy);
+            if (!played) {
+                log("✖ 无法使用【" + card.getName() + "】");
+                return false;
+            }
+
+            log("▶ 你使用了【" + card.getName() + "】");
+            if (enemy.getBlock() < enemyBlockBefore) {
+                log("   敌人格挡吸收了 " + (enemyBlockBefore - enemy.getBlock()) + " 点伤害");
+            }
+            if (enemy.getHp() < enemyHpBefore) {
+                log("   对敌人造成 " + (enemyHpBefore - enemy.getHp()) + " 点伤害");
+            }
+            if (enemy.getBlock() > enemyBlockBefore) {
+                log("   敌人获得 " + (enemy.getBlock() - enemyBlockBefore) + " 点格挡");
+            }
+            if (player.getBlock() > playerBlockBefore) {
+                log("   你获得 " + (player.getBlock() - playerBlockBefore) + " 点格挡");
+            }
+
+            if (!enemy.isAlive()) {
+                gameOver = true;
+                playerWin = true;
+                log("🎉 你击败了 " + enemy.getName() + "，胜利！");
+            }
+            return true;
+        } catch (RuntimeException ex) {
+            log("✖ 出牌异常: " + ex.getMessage());
+            ex.printStackTrace();
             return false;
         }
-
-        log("▶ 你使用了【" + card.getName() + "】");
-        if (enemy.getBlock() < enemyBlockBefore) {
-            log("   敌人格挡吸收了 " + (enemyBlockBefore - enemy.getBlock()) + " 点伤害");
-        }
-        if (enemy.getHp() < enemyHpBefore) {
-            log("   对敌人造成 " + (enemyHpBefore - enemy.getHp()) + " 点伤害");
-        }
-        if (enemy.getBlock() > enemyBlockBefore) {
-            log("   敌人获得 " + (enemy.getBlock() - enemyBlockBefore) + " 点格挡");
-        }
-        if (player.getBlock() > playerBlockBefore) {
-            log("   你获得 " + (player.getBlock() - playerBlockBefore) + " 点格挡");
-        }
-
-        if (!enemy.isAlive()) {
-            gameOver = true;
-            playerWin = true;
-            log("🎉 你击败了 " + enemy.getName() + "，胜利！");
-        }
-        return true;
     }
 
     /** 结束当前玩家回合：玩家弃牌 → 敌人行动 → 新回合开始 */
     public void endTurn() {
-        if (!playerTurn || gameOver) return;
+        try {
+            if (!playerTurn || gameOver) return;
 
-        // 1) 玩家回合结束
-        player.endTurn();
-        playerTurn = false;
+            // 1) 玩家回合结束
+            player.endTurn();
+            playerTurn = false;
 
-        // 2) 敌人回合（若还活着）
-        if (enemy.isAlive()) {
-            enemyTurn();
+            // 2) 敌人回合（若还活着）
+            if (enemy.isAlive()) {
+                enemyTurn();
+            }
+
+            // 3) 玩家死亡判定
+            if (!player.isAlive()) {
+                gameOver = true;
+                playerWin = false;
+                log("💀 你被击败了…");
+                return;
+            }
+
+            // 4) 新回合开始
+            beginNewTurn();
+        } catch (RuntimeException ex) {
+            log("✖ 回合结算异常: " + ex.getMessage());
+            ex.printStackTrace();
         }
-
-        // 3) 玩家死亡判定
-        if (!player.isAlive()) {
-            gameOver = true;
-            playerWin = false;
-            log("💀 你被击败了…");
-            return;
-        }
-
-        // 4) 新回合开始
-        beginNewTurn();
     }
 
     /** 敌人回合：清上回合格挡 → 按当前意图行动 → 决定下一回合意图 */
