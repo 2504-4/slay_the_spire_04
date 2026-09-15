@@ -15,7 +15,7 @@
 
 ## 环境与构建入口
 
-- 推荐 JDK 17（需完整 JDK，不是只有 JRE）；本次修复也验证 JDK 25 构建。
+- 推荐 JDK 17（需完整 JDK，不是只有 JRE）；本次在 Linux 上也验证了 JDK 26 构建和启动。
 - JavaFX 17.0.2，由 Maven 管理。
 - 项目自带 Maven Wrapper，固定 Maven 3.9.11，无需预先安装全局 Maven。
 - 首次运行 Wrapper 需要联网下载 Maven 和项目依赖。后续使用本机缓存。
@@ -44,12 +44,13 @@ JAVA_HOME 的上述设置只影响当前终端，不修改系统设置。若不�
 ### macOS / Linux
 
 ~~~bash
-# JAVA_HOME 指向本机 JDK 17
-sh ./mvnw clean verify
-sh ./mvnw javafx:run
+# 本机 Linux 的 JDK 17 路径；其他机器请改成实际 JDK 目录
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+./mvnw clean verify
+./mvnw javafx:run
 ~~~
 
-当前自动验证仅覆盖 Windows；未验证 macOS / Linux 图形界面运行。
+本次已验证 Linux 构建及虚拟显示环境中的窗口启动、出牌和结束回合；未验证 macOS，也未进行完整图形界面通关验收。
 
 若全局 Maven 已配置，也可以使用 mvn clean verify 和 mvn javafx:run。
 
@@ -58,7 +59,8 @@ sh ./mvnw javafx:run
 1. 打开或导入仓库根目录的 pom.xml，并重新加载 Maven 项目。
 2. Project SDK 和语言级别使用 Java 17。
 3. Maven 设置中选择项目 Wrapper（或 IDEA 内置 Maven），Runner JRE 建议使用 Project SDK / JDK 17。
-4. 在 Maven 生命周期中执行 clean、verify。运行主类 org.example.Main 或执行 javafx:run。
+4. 在 Maven 生命周期中执行 clean、verify。运行主类 org.Main，或执行 javafx:run。若已有运行配置仍指向 org.example.Main，请删除旧配置并从 org.Main 重新运行。
+5. org.Main 是普通 Java 启动入口，窗口实现位于 org.view.GameApplication；不要将 GameApplication 当作 IDEA 的普通主类直接运行。
 
 ## 构建产物与测试
 
@@ -68,11 +70,18 @@ sh ./mvnw javafx:run
 - target/surefire-reports/：JUnit 测试结果。
 - target/site/jacoco/index.html：覆盖率报告。
 
-本次验证结果：Windows 下 JDK 17.0.12 和 JDK 25.0.2 均通过 clean verify；每轮执行 18 个测试，失败、错误、跳过均为 0；另在 JDK 17 下连续重复运行 5 轮 test，全部通过。此次未执行图形界面交互验收。
+本次验证结果（2026-09-15，Linux）：
+
+- JDK 17.0.20.1 和 JDK 26.0.2.1 均通过 Wrapper 的 clean verify；20 个测试全部通过，无失败、错误或跳过。
+- 两个 JDK 下均验证 Wrapper 的 javafx:run 和普通类路径的 org.Main 启动，游戏窗口成功创建；窗口检查使用 Xvfb 虚拟显示环境。
+- JDK 17 下额外验证窗口初始为 5 张手牌、3 点能量；出牌后为 4 张、2 点能量；结束回合后恢复 5 张、3 点能量。
+- JDK 26 仍会输出旧版 Maven/JavaFX 的兼容性警告，但此次构建和启动没有因此失败；日常使用建议选择 JDK 17。
+
+此前记录的 Windows 验证覆盖 JDK 17.0.12 / 25.0.2 和原有 18 项测试；本轮未重新验证 Windows。
 
 当前 jar 是普通项目包，未配置为包含 JavaFX 和所有依赖的独立可执行包；不要将 java -jar 失败误认为 Maven 构建失败。推荐使用 Wrapper 的 javafx:run 启动。
 
-测试覆盖：初始化、攻击与防御、非法索引、能量消耗和不足、回合结算、奖励选择与等待锁定、四关通关、玩家失败、终局操作限制、日志与牌堆守恒。
+测试覆盖：Maven 入口配置、普通类路径启动入口结构、初始化、攻击与防御、非法索引、能量消耗和不足、回合结算、奖励选择与等待锁定、四关通关、玩家失败、终局操作限制、日志与牌堆守恒。
 
 通关测试使用确定性前置状态，将当前敌人调整为一击可击败，然后通过真实控制器出牌和选奖励完成状态流转；它验证流程，不代表随机策略可以保证通关，也不是游戏平衡性或图形界面测试。
 
@@ -85,3 +94,13 @@ sh ./mvnw javafx:run
 5. **编译与 IDE 语言级别不一致**：Maven 统一使用 release 17；IDE 项目语言级别由 25 调整为 17，保留已有项目迁移与业务代码。
 
 遇到下载失败，请检查网络、代理和 Maven 仓库配置；不要用跳过测试作为修复方式。
+
+## 本次启动故障补充修复（2026-09-15）
+
+1. **找不到主类 org.example.Main**：源代码已迁移到 org.Main，但 JavaFX 插件仍使用旧包名。已同步构建配置和 IDEA 启动说明。
+2. **IDEA 普通类路径运行提示缺少 JavaFX 运行时组件**：将普通入口 org.Main 与继承 Application 的窗口类 org.view.GameApplication 分离；入口显式调用 Application.launch。
+3. **首回合错误抽到 10 张牌**：控制器构造时已经初始化，窗口创建不再重复调用 startGame，恢复初始 5 张手牌。
+4. **Linux 下 ./mvnw 无执行权限**：补上 Wrapper 的可执行权限；也可以使用 sh ./mvnw。
+5. **测试依赖缓存不完整**：本机已下载缺少的 Maven 依赖。其他机器首次构建仍需要联网。
+
+保留工作区中对旧文件 Gamemodel.java 的删除，仅使用正确命名的 GameModel.java；没有恢复旧模型或覆盖已有控制器修改。

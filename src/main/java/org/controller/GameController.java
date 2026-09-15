@@ -49,7 +49,7 @@ public class GameController {
     }
 
     /** 开局：初始化日志并让玩家进入第一回合 */
-    private void startGame() {
+    public void startGame() {
         battleLog.clear();
         log("⚔ 你进入第 " + getCurrentLevel() + "/" + getTotalLevels()
                 + " 关，遇到了 " + enemy.getName() + "！");
