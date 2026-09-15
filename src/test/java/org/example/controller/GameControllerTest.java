@@ -1,6 +1,7 @@
 package org.example.controller;
 
-import org.example.model.GameModel;
+import org.controller.GameController;
+import org.model.GameModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

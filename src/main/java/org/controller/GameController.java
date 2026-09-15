@@ -1,6 +1,6 @@
-package org.example.controller;
+package org.controller;
 
-import org.example.model.GameModel;
+import org.model.GameModel;
 
 import java.util.ArrayList;
 import java.util.Collections;

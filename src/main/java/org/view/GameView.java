@@ -1,4 +1,4 @@
-package org.example.view;
+package org.view;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,8 +13,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import org.example.controller.GameController;
-import org.example.model.GameModel;
+import org.controller.GameController;
+import org.model.GameModel;
 
 import java.util.function.Supplier;
 

@@ -1,4 +1,4 @@
-package org.example.view;
+package org.view;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
